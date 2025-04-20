@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
 import {
   h,
   ref,
@@ -55,7 +55,8 @@ const splitterTaps = ref({
 });
 
 const splitpanesClasses = computed(() => ({
-  [`splitpanes splitpanes--${props.horizontal ? "horizontal" : "vertical"}`]: true,
+  [`splitpanes splitpanes--${props.horizontal ? "horizontal" : "vertical"}`]:
+    true,
   "splitpanes--dragging": touch.value.dragging,
 }));
 
