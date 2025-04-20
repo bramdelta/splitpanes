@@ -86,11 +86,11 @@ const bindEvents = () => {
 };
 
 const unbindEvents = () => {
-  document.removeEventListener("mousemove", onMouseMove, { passive: false });
+  document.removeEventListener("mousemove", onMouseMove);
   document.removeEventListener("mouseup", onMouseUp);
 
   if ("ontouchstart" in window) {
-    document.removeEventListener("touchmove", onMouseMove, { passive: false });
+    document.removeEventListener("touchmove", onMouseMove);
     document.removeEventListener("touchend", onMouseUp);
   }
 };
@@ -201,7 +201,7 @@ const onSplitterDblClick = (event: MouseEvent, splitterIndex: number) => {
   }
 };
 
-const onPaneClick = (event: MouseEvent, paneId) => {
+const onPaneClick = (event: MouseEvent, paneId: number) => {
   emitEvent("pane-click", {
     event,
     index: indexedPanes.value[paneId].index,
@@ -691,7 +691,7 @@ const equalizeAfterAddOrRemove = ({ addedPane, removedPane } = {}) => {
 
 // Second loop to adjust sizes now that we know more about the panes constraints.
 const readjustSizes = (leftToAllocate, ungrowable, unshrinkable) => {
-  let equalSpaceToAllocate;
+  let equalSpaceToAllocate: number;
   if (leftToAllocate > 0)
     equalSpaceToAllocate =
       leftToAllocate / (panesCount.value - ungrowable.length);
@@ -699,7 +699,7 @@ const readjustSizes = (leftToAllocate, ungrowable, unshrinkable) => {
     equalSpaceToAllocate =
       leftToAllocate / (panesCount.value - unshrinkable.length);
 
-  panes.value.forEach((pane, i) => {
+  panes.value.forEach((pane) => {
     if (leftToAllocate > 0 && !ungrowable.includes(pane.id)) {
       // Need to diff the size before and after to get the exact allocated space.
       const newPaneSize = Math.max(
