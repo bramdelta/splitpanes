@@ -11,6 +11,16 @@ import {
   watch,
 } from "vue";
 
+import {
+  horizontalKey,
+  requestUpdateKey,
+  onPaneAddKey,
+  onPaneRemoveKey,
+  onPaneClickKey,
+  indexedPanesKey,
+  panesKey,
+} from "./injectionKeys";
+
 const emit = defineEmits([
   "ready",
   "resize",
@@ -730,16 +740,16 @@ const render = () => {
   );
 };
 
-provide("panes", panes);
-provide("indexedPanes", indexedPanes);
+provide(panesKey, panes);
+provide(indexedPanesKey, indexedPanes);
 provide(
-  "horizontal",
+  horizontalKey,
   computed(() => props.horizontal),
 );
-provide("requestUpdate", requestUpdate);
-provide("onPaneAdd", onPaneAdd);
-provide("onPaneRemove", onPaneRemove);
-provide("onPaneClick", onPaneClick);
+provide(requestUpdateKey, requestUpdate);
+provide(onPaneAddKey, onPaneAdd);
+provide(onPaneRemoveKey, onPaneRemove);
+provide(onPaneClickKey, onPaneClick);
 </script>
 
 <template>
