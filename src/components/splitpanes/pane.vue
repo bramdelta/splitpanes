@@ -11,6 +11,14 @@
 
 <script setup lang="ts">
 import {
+  horizontalKey,
+  requestUpdateKey,
+  onPaneAddKey,
+  onPaneRemoveKey,
+  onPaneClickKey,
+  indexedPanesKey,
+} from "./injectionKeys";
+import {
   inject,
   ref,
   computed,
@@ -26,14 +34,14 @@ const props = defineProps({
   maxSize: { type: [Number, String], default: 100 },
 });
 
-const requestUpdate = inject("requestUpdate");
-const onPaneAdd = inject("onPaneAdd");
-const horizontal = inject("horizontal");
-const onPaneRemove = inject("onPaneRemove");
-const onPaneClick = inject("onPaneClick");
+const requestUpdate = inject(requestUpdateKey);
+const onPaneAdd = inject(onPaneAddKey);
+const horizontal = inject(horizontalKey);
+const onPaneRemove = inject(onPaneRemoveKey);
+const onPaneClick = inject(onPaneClickKey);
 
 const uid = getCurrentInstance()?.uid;
-const indexedPanes = inject("indexedPanes");
+const indexedPanes = inject(indexedPanesKey);
 const pane = computed(() => indexedPanes.value[uid]);
 
 const paneEl = ref(null);
