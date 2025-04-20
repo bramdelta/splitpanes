@@ -12,5 +12,6 @@ export const onPaneAddKey: InjectionKey<(pane: Pane) => void> =
   Symbol("onPaneAdd");
 export const onPaneRemoveKey: InjectionKey<(paneId: number) => void> =
   Symbol("onPaneRemove");
-export const onPaneClickKey: InjectionKey<(paneId: number) => void> =
-  Symbol("onPaneClick");
+export const onPaneClickKey: InjectionKey<
+  (event: MouseEvent, paneId: number) => void
+> = Symbol("onPaneClick");

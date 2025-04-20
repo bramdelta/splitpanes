@@ -6,3 +6,20 @@ interface Pane {
   givenSize: number;
   size: number;
 }
+
+interface PaneUpdate {
+  addedPane: Pane;
+  removedPane: Pane;
+}
+
+interface DragOffsets {
+  x: number;
+  y: number;
+}
+
+interface PaneSums {
+  prevPanesSize: number;
+  nextPanesSize: number;
+  prevReachedMinPanes: 0;
+  nextReachedMinPanes: 0;
+}

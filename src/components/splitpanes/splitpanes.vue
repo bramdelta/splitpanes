@@ -23,23 +23,6 @@ const emit = defineEmits([
   "splitter-dblclick",
 ]);
 
-interface PaneUpdate {
-  addedPane: Pane;
-  removedPane: Pane;
-}
-
-interface DragOffsets {
-  x: number;
-  y: number;
-}
-
-interface PaneSums {
-  prevPanesSize: number;
-  nextPanesSize: number;
-  prevReachedMinPanes: 0;
-  nextReachedMinPanes: 0;
-}
-
 const props = defineProps({
   horizontal: { type: Boolean, default: false },
   pushOtherPanes: { type: Boolean, default: true },
