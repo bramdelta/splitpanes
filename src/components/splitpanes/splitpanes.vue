@@ -52,7 +52,7 @@ const indexedPanes = computed(() =>
 );
 const panesCount = computed(() => panes.value.length);
 
-const containerEl = ref(null);
+const containerEl = ref<HTMLElement | null>(null);
 const ready = ref(false);
 const touch = ref({
   mouseDown: false,
@@ -95,13 +95,28 @@ const unbindEvents = () => {
   }
 };
 
-const onMouseDown = (event: MouseEvent, splitterIndex: number) => {
+const onMouseDown = (event: MouseEvent | TouchEvent, splitterIndex: number) => {
   // Store the cursor offset within the splitter to keep the cursor in the same position while dragging.
-  const splitterEl = event.target.closest(".splitpanes__splitter");
+  let target = event.target as Element;
+  const splitterEl = target.closest(".splitpanes__splitter");
+
+  let clientX: number, clientY: number;
+
   if (splitterEl) {
     const { left, top } = splitterEl.getBoundingClientRect();
-    const { clientX, clientY } =
-      "ontouchstart" in window && event.touches ? event.touches[0] : event;
+    if (
+      "ontouchstart" in window &&
+      event instanceof TouchEvent &&
+      event.touches
+    ) {
+      clientX = event.touches[0].clientX;
+      clientY = event.touches[0].clientY;
+    } else if (event instanceof MouseEvent) {
+      clientX = event.clientX;
+      clientY = event.clientY;
+    } else {
+      throw new Error("Unsupported event type.");
+    }
     touch.value.cursorOffset = props.horizontal
       ? clientY - top
       : clientX - left;
@@ -194,11 +209,24 @@ const onPaneClick = (event: MouseEvent, paneId) => {
   });
 };
 
-// Get the cursor position relative to the splitpanes container.
-const getCurrentMouseDrag = (event: MouseEvent) => {
+const getCurrentMouseDrag = (event: TouchEvent | MouseEvent) => {
   const rect = containerEl.value.getBoundingClientRect();
-  const { clientX, clientY } =
-    "ontouchstart" in window && event.touches ? event.touches[0] : event;
+
+  let clientX: number, clientY: number;
+
+  if (
+    "ontouchstart" in window &&
+    event instanceof TouchEvent &&
+    event.touches
+  ) {
+    clientX = event.touches[0].clientX;
+    clientY = event.touches[0].clientY;
+  } else if (event instanceof MouseEvent) {
+    clientX = event.clientX;
+    clientY = event.clientY;
+  } else {
+    throw new Error("Unsupported event type.");
+  }
 
   return {
     x: clientX - (props.horizontal ? 0 : touch.value.cursorOffset) - rect.left,
