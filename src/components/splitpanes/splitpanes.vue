@@ -23,6 +23,11 @@ const emit = defineEmits([
   "splitter-dblclick",
 ]);
 
+interface PaneUpdate {
+  addedPane: Pane;
+  removedPane: Pane;
+}
+
 interface DragOffsets {
   x: number;
   y: number;
@@ -516,7 +521,7 @@ const onPaneAdd = (pane: Pane) => {
       redoSplitters();
 
       // 3. Resize the panes (before pane-add so it will contain correct width).
-      resetPaneSizes({ addedPane: panes.value[index] });
+      resetPaneSizes({ addedPane: panes.value[index] } as PaneUpdate);
 
       // 4. Fire `pane-add` event.
       emitEvent("pane-add", { pane: panes.value[index] });
@@ -524,7 +529,7 @@ const onPaneAdd = (pane: Pane) => {
   }
 };
 
-const onPaneRemove = (uid) => {
+const onPaneRemove = (uid: number) => {
   // 1. Remove the pane from array and redo indexes.
   const index = panes.value.findIndex((p) => p.id === uid);
   panes.value[index].el = null; // Prevent memory leaks.
@@ -539,11 +544,13 @@ const onPaneRemove = (uid) => {
     emitEvent("pane-remove", { pane: removed });
 
     // 4. Resize the panes.
-    resetPaneSizes({ removedPane: { ...removed, index } });
+    resetPaneSizes({ removedPane: { ...removed, index } } as PaneUpdate);
   });
 };
 
-const resetPaneSizes = (changedPanes = {}) => {
+const resetPaneSizes = (
+  changedPanes: PaneUpdate = { addedPane: null, removedPane: null },
+) => {
   if (!changedPanes.addedPane && !changedPanes.removedPane)
     initialPanesSizing();
   else if (
@@ -609,14 +616,17 @@ const initialPanesSizing = () => {
   }
 };
 
-const equalizeAfterAddOrRemove = ({ addedPane, removedPane } = {}) => {
+const equalizeAfterAddOrRemove = (
+  changedPanes: PaneUpdate = { addedPane: null, removedPane: null },
+) => {
   let equalSpace = 100 / panesCount.value;
   let leftToAllocate = 0;
   const ungrowable = [];
   const unshrinkable = [];
 
-  if ((addedPane?.givenSize ?? null) !== null) {
-    equalSpace = (100 - addedPane.givenSize) / (panesCount.value - 1);
+  if ((changedPanes?.addedPane?.givenSize ?? null) !== null) {
+    equalSpace =
+      (100 - changedPanes?.addedPane.givenSize) / (panesCount.value - 1);
   }
 
   // Check if pre-allocated space is 100%.
@@ -630,7 +640,8 @@ const equalizeAfterAddOrRemove = ({ addedPane, removedPane } = {}) => {
 
   for (const pane of panes.value) {
     const addedPaneHasGivenSize =
-      addedPane?.givenSize !== null && addedPane?.id === pane.id;
+      changedPanes?.addedPane?.givenSize !== null &&
+      changedPanes?.addedPane?.id === pane.id;
     if (!addedPaneHasGivenSize)
       pane.size = Math.max(Math.min(equalSpace, pane.max), pane.min);
 
