@@ -247,7 +247,7 @@ const getCurrentDragPercentage = (drag: DragOffsets) => {
 
 const calculatePanesSize = (drag: DragOffsets) => {
   const splitterIndex = touch.value.activeSplitter;
-  let sums = {
+  let sums: PaneSums = {
     prevPanesSize: sumPrevPanesSize(splitterIndex),
     nextPanesSize: sumNextPanesSize(splitterIndex),
     prevReachedMinPanes: 0,
@@ -400,14 +400,14 @@ const doPushOtherPanes = (sums: PaneSums, dragPercentage: number) => {
   return { sums, panesToResize };
 };
 
-const sumPrevPanesSize = (splitterIndex: number) => {
+const sumPrevPanesSize = (splitterIndex: number): number => {
   return panes.value.reduce(
     (total, pane, i) => total + (i < splitterIndex ? pane.size : 0),
     0,
   );
 };
 
-const sumNextPanesSize = (splitterIndex: number) => {
+const sumNextPanesSize = (splitterIndex: number): number => {
   return panes.value.reduce(
     (total, pane, i) => total + (i > splitterIndex + 1 ? pane.size : 0),
     0,
@@ -446,7 +446,11 @@ const checkSplitpanesNodes = () => {
   }
 };
 
-const addSplitter = (paneIndex: number, nextPaneNode, isVeryFirst = false) => {
+const addSplitter = (
+  paneIndex: number,
+  nextPaneNode: Element,
+  isVeryFirst = false,
+) => {
   const splitterIndex = paneIndex - 1;
   const elm = document.createElement("div");
   elm.classList.add("splitpanes__splitter");
@@ -465,7 +469,7 @@ const addSplitter = (paneIndex: number, nextPaneNode, isVeryFirst = false) => {
   nextPaneNode.parentNode.insertBefore(elm, nextPaneNode);
 };
 
-const removeSplitter = (node) => {
+const removeSplitter = (node: HTMLElement) => {
   node.onmousedown = undefined;
   node.onclick = undefined;
   node.ondblclick = undefined;
@@ -475,7 +479,8 @@ const removeSplitter = (node) => {
 const redoSplitters = () => {
   const children = Array.from(containerEl.value?.children || []);
   for (const el of children) {
-    if (el.className.includes("splitpanes__splitter")) removeSplitter(el);
+    if (el.className.includes("splitpanes__splitter"))
+      removeSplitter(el as HTMLElement);
   }
   let paneIndex = 0;
   for (const el of children) {
@@ -493,7 +498,7 @@ const requestUpdate = ({ uid, ...args }) => {
   for (const [key, value] of Object.entries(args)) pane[key] = value;
 };
 
-const onPaneAdd = (pane) => {
+const onPaneAdd = (pane: Pane) => {
   // 1. Add pane to array at the same index it was inserted in the <splitpanes> tag.
   let index = -1;
   Array.from(containerEl.value?.children || []).some((el) => {
@@ -690,7 +695,11 @@ const equalizeAfterAddOrRemove = ({ addedPane, removedPane } = {}) => {
 } */
 
 // Second loop to adjust sizes now that we know more about the panes constraints.
-const readjustSizes = (leftToAllocate, ungrowable, unshrinkable) => {
+const readjustSizes = (
+  leftToAllocate: number,
+  ungrowable: number[],
+  unshrinkable: number[],
+) => {
   let equalSpaceToAllocate: number;
   if (leftToAllocate > 0)
     equalSpaceToAllocate =
