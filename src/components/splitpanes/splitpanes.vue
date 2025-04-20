@@ -643,57 +643,6 @@ const equalizeAfterAddOrRemove = ({ addedPane, removedPane } = {}) => {
     readjustSizes(leftToAllocate, ungrowable, unshrinkable);
 };
 
-/* const recalculatePaneSizes = ({ addedPane, removedPane } = {}) => {
-  let leftToAllocate = 100
-  let equalSpaceToAllocate = leftToAllocate / panesCount.value
-  let ungrowable = []
-  let unshrinkable = []
-
-  // When adding a pane with no size, apply min-size if defined otherwise divide another pane
-  // (next or prev) in 2.
-  // if (addedPane && addedPane.size === null) {
-  //   if (addedPane.min) addedPane.size = addedPane.min
-  //   else {
-  //     const paneToDivide = panes.value[addedPane.index + 1] || panes.value[addedPane.index - 1]
-  //     if (paneToDivide) {
-  //       // @todo: Dividing that pane in 2 could be incorrect if becoming lower than its min size.
-  //       addedPane.size = paneToDivide.size / 2
-  //       paneToDivide.size /= 2
-  //     }
-  //   }
-  // }
-
-  panes.value.forEach((pane, i) => {
-    // Added pane - reduce the size of the next pane.
-    if (addedPane && addedPane.index + 1 === i) {
-      pane.size = Math.max(Math.min(100 - sumPrevPanesSize(i) - sumNextPanesSize(i + 1), pane.max), pane.min)
-      // @todo: if could not allocate correctly, try to allocate in the next pane straight away,
-      // then still do the second loop if not correct.
-    }
-
-    // Removed pane - increase the size of the next pane.
-    else if (removedPane && removedPane.index === i) {
-      pane.size = Math.max(Math.min(100 - sumPrevPanesSize(i) - sumNextPanesSize(i + 1), pane.max), pane.min)
-      // @todo: if could not allocate correctly, try to allocate in the next pane straight away,
-      // then still do the second loop if not correct.
-    }
-
-    // Initial load and on demand recalculation.
-    else if (!addedPane && !removedPane && pane.size === null) {
-      pane.size = Math.max(Math.min(equalSpaceToAllocate, pane.max), pane.min)
-    }
-
-    leftToAllocate -= pane.size
-
-    if (pane.size >= pane.max) ungrowable.push(pane.id)
-    if (pane.size <= pane.min) unshrinkable.push(pane.id)
-  })
-
-  // Do one more loop to adjust sizes if still wrong.
-  // > 0.1: Prevent maths rounding issues due to bytes.
-  if (Math.abs(leftToAllocate) > 0.1) readjustSizes(leftToAllocate, ungrowable, unshrinkable)
-} */
-
 // Second loop to adjust sizes now that we know more about the panes constraints.
 const readjustSizes = (
   leftToAllocate: number,
@@ -742,53 +691,6 @@ const readjustSizes = (
     });
   }
 };
-
-/* const distributeEmptySpace = () => {
-  let growablePanes = []
-  let collapsedPanesCount.value = 0
-  let growableAmount = 0 // Total of how much the current panes can grow to fill blank space.
-  let spaceToDistribute = 100 - panes.value.reduce((sum, pane) => (sum += pane.size) && sum, 0)
-  // Do a first loop to determine if we can distribute the new blank space between all the
-  // expandedPanes, without expanding the collapsed ones.
-  panes.value.forEach(pane => {
-    if (pane.size < pane.max) growablePanes.push(pane)
-
-    if (!pane.size) collapsedPanesCount.value++
-    else growableAmount += pane.max - pane.size
-  })
-
-  // If the blank space to distribute is too great for the expanded panes, also expand collapsed ones.
-  let expandCollapsedPanes = growableAmount < spaceToDistribute
-
-  // New space to distribute equally.
-  let growablePanesCount.value = (growablePanes.length - (expandCollapsedPanes ? 0 : collapsedPanesCount.value))
-  let equalSpaceToDistribute = spaceToDistribute / growablePanesCount.value
-  // if (growablePanesCount.value === 1) equalSpace = 100 / panesCount.value
-  let spaceLeftToDistribute = spaceToDistribute
-
-  // Now add the equalSpaceToDistribute to each pane size accordingly.
-  growablePanes.forEach(pane => {
-    if (pane.size < pane.max && (pane.size || (!pane.size && expandCollapsedPanes))) {
-      const newSize = Math.min(pane.size + equalSpaceToDistribute, pane.max)
-      let allocatedSpace = (newSize - pane.size)
-      spaceLeftToDistribute -= allocatedSpace
-      pane.size = newSize
-      // If the equalSpaceToDistribute is not fully added to the current pane, distribute the remainder
-      // to the next panes.
-      // Also fix decimal issue due to bites - E.g. calculating 8.33 and getting 8.3299999999999
-      if (equalSpaceToDistribute - allocatedSpace > 0.1) equalSpaceToDistribute = spaceLeftToDistribute / (--growablePanesCount.value)
-    }
-  })
-
-  /* Disabled otherwise will show up on hot reload.
-  // if there is still space to allocate show warning message.
-  if (panesCount.value && ~~spaceLeftToDistribute) {
-    // eslint-disable-next-line no-console
-    console.warn('Splitpanes: Could not distribute all the empty space between panes due to their constraints.')
-  } *\/
-
-  emitEvent('resized', { index: touch.value.activeSplitter }, true)
-} */
 
 const emitEvent = (name, data = undefined, injectPrevAndNextPanes = false) => {
   const index = data?.index ?? touch.value.activeSplitter ?? null;
