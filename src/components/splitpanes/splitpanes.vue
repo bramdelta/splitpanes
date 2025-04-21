@@ -207,7 +207,7 @@ const onPaneClick = (event: MouseEvent, paneId: number) => {
   });
 };
 
-const getCurrentMouseDrag = (event: TouchEvent | MouseEvent) => {
+const getCurrentMouseDrag = (event: TouchEvent | MouseEvent): DragOffsets => {
   const rect = containerEl.value.getBoundingClientRect();
 
   let clientX: number, clientY: number;
@@ -233,7 +233,7 @@ const getCurrentMouseDrag = (event: TouchEvent | MouseEvent) => {
 };
 
 // Returns the drag percentage of the splitter relative to the container (ranging from 0 to 100%).
-const getCurrentDragPercentage = (drag: DragOffsets) => {
+const getCurrentDragPercentage = (drag: DragOffsets): number => {
   let dragOffset = drag[props.horizontal ? "y" : "x"];
   // In the code below 'size' refers to 'width' for vertical and 'height' for horizontal layout.
   const containerSize =
