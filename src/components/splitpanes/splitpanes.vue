@@ -53,13 +53,13 @@ const panesCount = computed(() => panes.value.length);
 
 const containerEl = ref<HTMLElement | null>(null);
 const ready = ref(false);
-const touch = ref({
+const touch: Ref<SplitterTouch> = ref({
   mouseDown: false,
   dragging: false,
   activeSplitter: null,
   cursorOffset: 0, // Cursor offset within the splitter.
 });
-const splitterTaps = ref({
+const splitterTaps: Ref<SplitterTap> = ref({
   // Used to detect double click on touch devices.
   splitter: null,
   timeoutId: null,

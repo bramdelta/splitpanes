@@ -24,3 +24,15 @@ interface PaneSums {
   prevReachedMinPanes: 0;
   nextReachedMinPanes: 0;
 }
+
+interface SplitterTouch {
+  mouseDown: boolean;
+  dragging: boolean;
+  activeSplitter: number | null;
+  cursorOffset: number;
+}
+
+interface SplitterTap {
+  splitter: number | null;
+  timeoutId: NodeJS.Timeout;
+}

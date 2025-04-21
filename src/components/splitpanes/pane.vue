@@ -44,7 +44,7 @@ const uid = getCurrentInstance()?.uid;
 const indexedPanes = inject(indexedPanesKey);
 const pane = computed(() => indexedPanes.value[uid]);
 
-const paneEl = ref(null);
+const paneEl = ref<HTMLElement>(null);
 const sizeNumber = computed(() => {
   const value =
     isNaN(parseFloat(String(props.size))) || props.size === undefined
