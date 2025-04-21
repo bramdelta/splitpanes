@@ -372,7 +372,11 @@ const calculatePanesSize = (drag: DragOffsets): void => {
   if (paneAfter !== null) {
     paneAfter.size = Math.min(
       Math.max(
-        100 - dragPercentage - sums.nextPanesSize - sums.nextReachedMinPanes,
+        100 -
+          // Careful here
+          Math.max(paneBefore.size, dragPercentage) -
+          sums.nextPanesSize -
+          sums.nextReachedMinPanes,
         paneAfter.min,
       ),
       paneAfter.max,

@@ -21,8 +21,8 @@ interface DragOffsets {
 interface PaneSums {
   prevPanesSize: number;
   nextPanesSize: number;
-  prevReachedMinPanes: 0;
-  nextReachedMinPanes: 0;
+  prevReachedMinPanes: number;
+  nextReachedMinPanes: number;
 }
 
 interface SplitterTouch {
