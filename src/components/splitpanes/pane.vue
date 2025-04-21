@@ -87,6 +87,7 @@ onMounted(() => {
     // The given size (useful to know the user intention).
     givenSize: props.size === undefined ? null : sizeNumber.value,
     size: sizeNumber.value, // The computed current size at any time.
+    index: null,
   });
 });
 
