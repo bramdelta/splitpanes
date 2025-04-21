@@ -9,6 +9,7 @@ import {
   provide,
   useSlots,
   watch,
+  Ref,
 } from "vue";
 
 import {
@@ -42,7 +43,7 @@ const props = defineProps({
 });
 
 const slots = useSlots();
-const panes = ref([]);
+const panes: Ref<Pane[]> = ref([]);
 // Indexed panes by id (Vue's internal component uid) of Pane components for fast lookup.
 // Every time a pane is destroyed this index is recomputed.
 const indexedPanes = computed(() =>
@@ -423,19 +424,19 @@ const sumNextPanesSize = (splitterIndex: number): number => {
 };
 
 // Return the previous pane from siblings which has a size (width for vert or height for horz) of more than 0.
-const findPrevExpandedPane = (splitterIndex: number) => {
+const findPrevExpandedPane = (splitterIndex: number): Pane | null => {
   const pane = [...panes.value]
     .reverse()
     .find((p) => p.index < splitterIndex && p.size > p.min);
-  return pane || {};
+  return pane || null;
 };
 
 // Return the next pane from siblings which has a size (width for vert or height for horz) of more than 0.
-const findNextExpandedPane = (splitterIndex: number) => {
+const findNextExpandedPane = (splitterIndex: number): Pane | null => {
   const pane = panes.value.find(
     (p) => p.index > splitterIndex + 1 && p.size > p.min,
   );
-  return pane || {};
+  return pane || null;
 };
 
 const checkSplitpanesNodes = () => {

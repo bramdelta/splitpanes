@@ -5,6 +5,7 @@ interface Pane {
   max: number;
   givenSize: number;
   size: number;
+  index: number | null;
 }
 
 interface PaneUpdate {
