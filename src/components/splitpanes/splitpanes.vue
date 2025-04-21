@@ -9,6 +9,7 @@ import {
   provide,
   useSlots,
   watch,
+  Ref,
 } from "vue";
 
 import {
@@ -42,7 +43,7 @@ const props = defineProps({
 });
 
 const slots = useSlots();
-const panes = ref([]);
+const panes: Ref<Pane[]> = ref([]);
 // Indexed panes by id (Vue's internal component uid) of Pane components for fast lookup.
 // Every time a pane is destroyed this index is recomputed.
 const indexedPanes = computed(() =>
@@ -156,13 +157,14 @@ const onSplitterClick = (event: MouseEvent, splitterIndex: number) => {
   if ("ontouchstart" in window) {
     event.preventDefault();
 
-    // Detect splitter double taps.
+    // If the same splitter was tapped twice...
     if (splitterTaps.value.splitter === splitterIndex) {
       clearTimeout(splitterTaps.value.timeoutId);
       splitterTaps.value.timeoutId = null;
       onSplitterDblClick(event, splitterIndex);
-      splitterTaps.value.splitter = null; // Reset for the next tap check.
+      splitterTaps.value.splitter = null;
     } else {
+      // Otherwise, set up this new splitter to have it's cooldown run
       splitterTaps.value.splitter = splitterIndex;
       // Store the fist tap and wait for the second one.
       splitterTaps.value.timeoutId = setTimeout(
@@ -217,9 +219,11 @@ const getCurrentMouseDrag = (event: TouchEvent | MouseEvent): DragOffsets => {
     event instanceof TouchEvent &&
     event.touches
   ) {
+    // Handle for if the event is a touch
     clientX = event.touches[0].clientX;
     clientY = event.touches[0].clientY;
   } else if (event instanceof MouseEvent) {
+    // Handle for if the event is a mouse
     clientX = event.clientX;
     clientY = event.clientY;
   } else {
@@ -264,6 +268,7 @@ const calculatePanesSize = (drag: DragOffsets) => {
   let paneBefore = panes.value[panesToResize[0]] || null;
   let paneAfter = panes.value[panesToResize[1]] || null;
 
+  // Variables for if either pane is exceeding it's min/max size bounds
   const paneBeforeMaxReached =
     paneBefore.max < 100 &&
     dragPercentage >= paneBefore.max + sums.prevPanesSize;
@@ -271,7 +276,8 @@ const calculatePanesSize = (drag: DragOffsets) => {
     paneAfter.max < 100 &&
     dragPercentage <=
       100 - (paneAfter.max + sumNextPanesSize(splitterIndex + 1));
-  // Prevent dragging beyond pane max.
+
+  // Prevent dragging beyond pane max
   if (paneBeforeMaxReached || paneAfterMaxReached) {
     if (paneBeforeMaxReached) {
       paneBefore.size = paneBefore.max;
@@ -302,6 +308,7 @@ const calculatePanesSize = (drag: DragOffsets) => {
     paneAfter = panes.value[panesToResize[1]] || null;
   }
 
+  // Resize the before pane (left or above the splitter)
   if (paneBefore !== null) {
     paneBefore.size = Math.min(
       Math.max(
@@ -311,6 +318,8 @@ const calculatePanesSize = (drag: DragOffsets) => {
       paneBefore.max,
     );
   }
+
+  // Resize the after pane (right or below the splitter)
   if (paneAfter !== null) {
     paneAfter.size = Math.min(
       Math.max(
@@ -325,6 +334,7 @@ const calculatePanesSize = (drag: DragOffsets) => {
 const doPushOtherPanes = (sums: PaneSums, dragPercentage: number) => {
   const splitterIndex = touch.value.activeSplitter;
   const panesToResize = [splitterIndex, splitterIndex + 1];
+
   // Pushing Down.
   // Going smaller than the current pane min size: take the previous expanded pane.
   if (dragPercentage < sums.prevPanesSize + panes.value[panesToResize[0]].min) {
@@ -360,6 +370,7 @@ const doPushOtherPanes = (sums: PaneSums, dragPercentage: number) => {
       return null;
     }
   }
+
   // Pushing Up.
   // Pushing up beyond min size is reached: take the next expanded pane.
   if (
@@ -413,19 +424,19 @@ const sumNextPanesSize = (splitterIndex: number): number => {
 };
 
 // Return the previous pane from siblings which has a size (width for vert or height for horz) of more than 0.
-const findPrevExpandedPane = (splitterIndex: number) => {
+const findPrevExpandedPane = (splitterIndex: number): Pane | null => {
   const pane = [...panes.value]
     .reverse()
     .find((p) => p.index < splitterIndex && p.size > p.min);
-  return pane || {};
+  return pane || null;
 };
 
 // Return the next pane from siblings which has a size (width for vert or height for horz) of more than 0.
-const findNextExpandedPane = (splitterIndex: number) => {
+const findNextExpandedPane = (splitterIndex: number): Pane | null => {
   const pane = panes.value.find(
     (p) => p.index > splitterIndex + 1 && p.size > p.min,
   );
-  return pane || {};
+  return pane || null;
 };
 
 const checkSplitpanesNodes = () => {
@@ -453,6 +464,9 @@ const addSplitter = (
   const elm = document.createElement("div");
   elm.classList.add("splitpanes__splitter");
 
+  // Since the very first splitter is "invisible", don't bother adding listeners to it
+  // The order is [(splitter) (pane)] each time a pane is created
+  // So with 2 panes, you really have two splitters, we just hide the first one
   if (!isVeryFirst) {
     elm.onmousedown = (event) => onMouseDown(event, splitterIndex);
 
@@ -476,10 +490,14 @@ const removeSplitter = (node: HTMLElement) => {
 
 const redoSplitters = () => {
   const children = Array.from(containerEl.value?.children || []);
+
+  // Remove all the existing splitters
   for (const el of children) {
     if (el.className.includes("splitpanes__splitter"))
       removeSplitter(el as HTMLElement);
   }
+
+  // Add them all back for as many panes exist
   let paneIndex = 0;
   for (const el of children) {
     if (el.className.includes("splitpanes__pane")) {
@@ -559,8 +577,10 @@ const resetPaneSizes = (
 const equalize = () => {
   const equalSpace = 100 / panesCount.value;
   let leftToAllocate = 0;
-  const ungrowable = [];
-  const unshrinkable = [];
+
+  // These are list of pane IDs
+  const ungrowable: number[] = [];
+  const unshrinkable: number[] = [];
 
   for (const pane of panes.value) {
     pane.size = Math.max(Math.min(equalSpace, pane.max), pane.min);
@@ -576,8 +596,8 @@ const equalize = () => {
 
 const initialPanesSizing = () => {
   let leftToAllocate = 100;
-  const ungrowable = [];
-  const unshrinkable = [];
+  const ungrowable: number[] = [];
+  const unshrinkable: number[] = [];
   let definedSizes = 0;
 
   // Check if pre-allocated space is 100%.
@@ -614,8 +634,8 @@ const equalizeAfterAddOrRemove = (
 ) => {
   let equalSpace = 100 / panesCount.value;
   let leftToAllocate = 0;
-  const ungrowable = [];
-  const unshrinkable = [];
+  const ungrowable: number[] = [];
+  const unshrinkable: number[] = [];
 
   if ((changedPanes?.addedPane?.givenSize ?? null) !== null) {
     equalSpace =
