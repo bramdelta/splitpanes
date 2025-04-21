@@ -71,9 +71,10 @@ const splitpanesClasses = computed(() => ({
   "splitpanes--dragging": touch.value.dragging,
 }));
 
-// Methods.
-// --------------------------------------------------------
-const bindEvents = () => {
+/**
+ * Bind the browser events to internal functions. Occurs when a splitter is clicked.
+ */
+const bindEvents = (): void => {
   document.addEventListener("mousemove", onMouseMove, { passive: false });
   document.addEventListener("mouseup", onMouseUp);
 
@@ -84,7 +85,10 @@ const bindEvents = () => {
   }
 };
 
-const unbindEvents = () => {
+/**
+ * Unbind the browser events. Occurs after a splitter is released.
+ */
+const unbindEvents = (): void => {
   document.removeEventListener("mousemove", onMouseMove);
   document.removeEventListener("mouseup", onMouseUp);
 
@@ -94,7 +98,15 @@ const unbindEvents = () => {
   }
 };
 
-const onMouseDown = (event: MouseEvent | TouchEvent, splitterIndex: number) => {
+/**
+ * Called when a splitter is clicked.
+ * @param event - The mouse event the browser sends.
+ * @param splitterIndex - The splitter that as clicked.
+ */
+const onMouseDown = (
+  event: MouseEvent | TouchEvent,
+  splitterIndex: number,
+): void => {
   // Store the cursor offset within the splitter to keep the cursor in the same position while dragging.
   let target = event.target as Element;
   const splitterEl = target.closest(".splitpanes__splitter");
@@ -126,7 +138,11 @@ const onMouseDown = (event: MouseEvent | TouchEvent, splitterIndex: number) => {
   touch.value.activeSplitter = splitterIndex;
 };
 
-const onMouseMove = (event: MouseEvent) => {
+/**
+ * Handle mouse movement after a splitter is clicked.
+ * @param event - The mouse event the browser sends.
+ */
+const onMouseMove = (event: MouseEvent): void => {
   if (touch.value.mouseDown) {
     // Prevent scrolling while touch dragging (only works with an active event, eg. passive: false).
     event.preventDefault();
@@ -138,7 +154,11 @@ const onMouseMove = (event: MouseEvent) => {
   }
 };
 
-const onMouseUp = (event: MouseEvent) => {
+/**
+ * Handle mouse release on a splitter.
+ * @param event - The mouse event the browser sends.
+ */
+const onMouseUp = (event: MouseEvent): void => {
   if (touch.value.dragging) {
     emitEvent("resized", { event }, true);
   }
@@ -152,8 +172,13 @@ const onMouseUp = (event: MouseEvent) => {
   }, 100);
 };
 
-// If touch device, detect double tap manually (2 taps separated by less than 500ms).
-const onSplitterClick = (event: MouseEvent, splitterIndex: number) => {
+/**
+ * Callback for when a splitter is clicked.
+ * @param event - The mouse event the browser sends.
+ * @param splitterIndex - The splitter that was clicked.
+ */
+const onSplitterClick = (event: MouseEvent, splitterIndex: number): void => {
+  // If touch device, detect double tap manually (2 taps separated by less than 500ms).
   if ("ontouchstart" in window) {
     event.preventDefault();
 
@@ -179,8 +204,13 @@ const onSplitterClick = (event: MouseEvent, splitterIndex: number) => {
   }
 };
 
-// On splitter dbl click or dbl tap maximize this pane.
-const onSplitterDblClick = (event: MouseEvent, splitterIndex: number) => {
+/**
+ * Callback for when a splitter is clicked. This will maximize the panes if
+ * set in props. Either way, it'll emit the event after
+ * @param event - The mouse event the browser sends.
+ * @param splitterIndex - The splitter that was clicked.
+ */
+const onSplitterDblClick = (event: MouseEvent, splitterIndex: number): void => {
   emitEvent("splitter-dblclick", { event, index: splitterIndex }, true);
 
   if (props.maximizePanes) {
@@ -201,7 +231,12 @@ const onSplitterDblClick = (event: MouseEvent, splitterIndex: number) => {
   }
 };
 
-const onPaneClick = (event: MouseEvent, paneId: number) => {
+/**
+ * Callback for when a pane is clicked.
+ * @param event - The mouse event the browser sends.
+ * @param paneId - The pane that was clicked.
+ */
+const onPaneClick = (event: MouseEvent, paneId: number): void => {
   emitEvent("pane-click", {
     event,
     index: indexedPanes.value[paneId].index,
@@ -209,6 +244,12 @@ const onPaneClick = (event: MouseEvent, paneId: number) => {
   });
 };
 
+/**
+ * Callback for when a pane is clicked.
+ * @param event - The mouse event the browser sends. Varies depending on
+ * if it's a mobile device or a desktop.
+ * @returns DragOffsets - How much the mouse has moved in the x/y.
+ */
 const getCurrentMouseDrag = (event: TouchEvent | MouseEvent): DragOffsets => {
   const rect = containerEl.value.getBoundingClientRect();
 
@@ -236,7 +277,11 @@ const getCurrentMouseDrag = (event: TouchEvent | MouseEvent): DragOffsets => {
   };
 };
 
-// Returns the drag percentage of the splitter relative to the container (ranging from 0 to 100%).
+/**
+ * Convert the x/y offsets to a percentage.
+ * @param drag - The x/y offsets the mouse has moved by.
+ * @returns number - The percentage of the SplitPanes the splitter was moved.
+ */
 const getCurrentDragPercentage = (drag: DragOffsets): number => {
   let dragOffset = drag[props.horizontal ? "y" : "x"];
   // In the code below 'size' refers to 'width' for vertical and 'height' for horizontal layout.
@@ -247,7 +292,11 @@ const getCurrentDragPercentage = (drag: DragOffsets): number => {
   return (dragOffset * 100) / containerSize;
 };
 
-const calculatePanesSize = (drag: DragOffsets) => {
+/**
+ * Determine and update the new sizes of the panes.
+ * @param drag - The x/y offsets the mouse has moved by.
+ */
+const calculatePanesSize = (drag: DragOffsets): void => {
   const splitterIndex = touch.value.activeSplitter;
   let sums: PaneSums = {
     prevPanesSize: sumPrevPanesSize(splitterIndex),
@@ -331,6 +380,13 @@ const calculatePanesSize = (drag: DragOffsets) => {
   }
 };
 
+/**
+ * Push other panes. Only occurs if the props specify it can happen.
+ * An example of this: If a middle pane has a minimum width, then the adjacent
+ * pane moves it when it's already at it's limit, it'll shove its neighbor.
+ * @param sums - Information about the adjacent panes.
+ * @param dragPercentage - How much the user has moved the mouse.
+ */
 const doPushOtherPanes = (sums: PaneSums, dragPercentage: number) => {
   const splitterIndex = touch.value.activeSplitter;
   const panesToResize = [splitterIndex, splitterIndex + 1];
@@ -409,6 +465,10 @@ const doPushOtherPanes = (sums: PaneSums, dragPercentage: number) => {
   return { sums, panesToResize };
 };
 
+/**
+ * The sum of panes on one side (like the left) of the splitter.
+ * @returns The sum of the sizes of all the panes on the side.
+ */
 const sumPrevPanesSize = (splitterIndex: number): number => {
   return panes.value.reduce(
     (total, pane, i) => total + (i < splitterIndex ? pane.size : 0),
@@ -416,6 +476,10 @@ const sumPrevPanesSize = (splitterIndex: number): number => {
   );
 };
 
+/**
+ * The sum of panes on one side (like the right) of the splitter.
+ * @returns The sum of the sizes of all the panes on the side.
+ */
 const sumNextPanesSize = (splitterIndex: number): number => {
   return panes.value.reduce(
     (total, pane, i) => total + (i > splitterIndex + 1 ? pane.size : 0),
@@ -423,7 +487,10 @@ const sumNextPanesSize = (splitterIndex: number): number => {
   );
 };
 
-// Return the previous pane from siblings which has a size (width for vert or height for horz) of more than 0.
+/**
+ * Find the pane on one side (like the left) that isn't collapsed.
+ * @returns The pane, if it exists. Otherwise, null.
+ */
 const findPrevExpandedPane = (splitterIndex: number): Pane | null => {
   const pane = [...panes.value]
     .reverse()
@@ -431,7 +498,10 @@ const findPrevExpandedPane = (splitterIndex: number): Pane | null => {
   return pane || null;
 };
 
-// Return the next pane from siblings which has a size (width for vert or height for horz) of more than 0.
+/**
+ * Find the pane on one side (like the right) that isn't collapsed.
+ * @returns The pane, if it exists. Otherwise, null.
+ */
 const findNextExpandedPane = (splitterIndex: number): Pane | null => {
   const pane = panes.value.find(
     (p) => p.index > splitterIndex + 1 && p.size > p.min,
@@ -439,7 +509,10 @@ const findNextExpandedPane = (splitterIndex: number): Pane | null => {
   return pane || null;
 };
 
-const checkSplitpanesNodes = () => {
+/**
+ * Verify that the DOM hierachy is correct, i.e. a <SplitPanes> only has <Pane>s as the children.
+ */
+const checkSplitpanesNodes = (): void => {
   const children = Array.from(containerEl.value?.children || []);
   for (const child of children) {
     const isPane = child.classList.contains("splitpanes__pane");
@@ -455,11 +528,17 @@ const checkSplitpanesNodes = () => {
   }
 };
 
+/**
+ * Add a splitter to the DOM.
+ * @param paneIndex - The pane that's gaining the splitter.
+ * @param paneIndex - The next pane to put it between.
+ * @param isVeryFirst - If this is the first pane to exist.
+ */
 const addSplitter = (
   paneIndex: number,
   nextPaneNode: Element,
   isVeryFirst = false,
-) => {
+): void => {
   const splitterIndex = paneIndex - 1;
   const elm = document.createElement("div");
   elm.classList.add("splitpanes__splitter");
@@ -481,14 +560,21 @@ const addSplitter = (
   nextPaneNode.parentNode.insertBefore(elm, nextPaneNode);
 };
 
-const removeSplitter = (node: HTMLElement) => {
+/**
+ * Remove a splitter from the DOM.
+ * @param node - The splitter's HTML element.
+ */
+const removeSplitter = (node: HTMLElement): void => {
   node.onmousedown = undefined;
   node.onclick = undefined;
   node.ondblclick = undefined;
   node.remove();
 };
 
-const redoSplitters = () => {
+/**
+ * Redo the splitters, occurs when the amount of panes changes.
+ */
+const redoSplitters = (): void => {
   const children = Array.from(containerEl.value?.children || []);
 
   // Remove all the existing splitters
@@ -508,13 +594,19 @@ const redoSplitters = () => {
   }
 };
 
-// Called by Pane component on programmatic resize.
-const requestUpdate = ({ uid, ...args }) => {
+/**
+ * Called by Pane component on programmatic resize.
+ */
+const requestUpdate = ({ uid, ...args }): void => {
   const pane = indexedPanes.value[uid];
   for (const [key, value] of Object.entries(args)) pane[key] = value;
 };
 
-const onPaneAdd = (pane: Pane) => {
+/**
+ * Called by Pane on creation.
+ * @param pane - The Pane datastructure.
+ */
+const onPaneAdd = (pane: Pane): void => {
   // 1. Add pane to array at the same index it was inserted in the <splitpanes> tag.
   let index = -1;
   Array.from(containerEl.value?.children || []).some((el) => {
@@ -540,7 +632,11 @@ const onPaneAdd = (pane: Pane) => {
   }
 };
 
-const onPaneRemove = (uid: number) => {
+/**
+ * Called by Pane on deletion.
+ * @param uid - The pane's ID.
+ */
+const onPaneRemove = (uid: number): void => {
   // 1. Remove the pane from array and redo indexes.
   const index = panes.value.findIndex((p) => p.id === uid);
   panes.value[index].el = null; // Prevent memory leaks.
@@ -559,9 +655,13 @@ const onPaneRemove = (uid: number) => {
   });
 };
 
+/**
+ * Reset the pane's sizes. Occurs when the amount of panes changes.
+ * @param changedPanes - The panes added or removed.
+ */
 const resetPaneSizes = (
   changedPanes: PaneUpdate = { addedPane: null, removedPane: null },
-) => {
+): void => {
   if (!changedPanes.addedPane && !changedPanes.removedPane)
     initialPanesSizing();
   else if (
@@ -574,7 +674,10 @@ const resetPaneSizes = (
   if (ready.value) emitEvent("resized");
 };
 
-const equalize = () => {
+/**
+ * Make panes equal in size.
+ */
+const equalize = (): void => {
   const equalSpace = 100 / panesCount.value;
   let leftToAllocate = 0;
 
@@ -594,7 +697,10 @@ const equalize = () => {
     readjustSizes(leftToAllocate, ungrowable, unshrinkable);
 };
 
-const initialPanesSizing = () => {
+/**
+ * Set the panes to their inital sizes, respecting their constraints.
+ */
+const initialPanesSizing = (): void => {
   let leftToAllocate = 100;
   const ungrowable: number[] = [];
   const unshrinkable: number[] = [];
@@ -629,9 +735,13 @@ const initialPanesSizing = () => {
   }
 };
 
+/**
+ * Equalize the panes after the count changes.
+ * @param changedPanes - The panes added or removed.
+ */
 const equalizeAfterAddOrRemove = (
   changedPanes: PaneUpdate = { addedPane: null, removedPane: null },
-) => {
+): void => {
   let equalSpace = 100 / panesCount.value;
   let leftToAllocate = 0;
   const ungrowable: number[] = [];
@@ -667,12 +777,18 @@ const equalizeAfterAddOrRemove = (
     readjustSizes(leftToAllocate, ungrowable, unshrinkable);
 };
 
-// Second loop to adjust sizes now that we know more about the panes constraints.
+/**
+ * Readjust the sizes of the panes
+ * @param leftToAllocate - The amount of space left to provide to the panes.
+ * @param ungrowable - The IDs of the panes that can't grow any further.
+ * @param unshrinkable - The IDs of the panes that can't shrink any further.
+ */
 const readjustSizes = (
   leftToAllocate: number,
   ungrowable: number[],
   unshrinkable: number[],
-) => {
+): void => {
+  // Second loop to adjust sizes now that we know more about the panes constraints.
   let equalSpaceToAllocate: number;
   if (leftToAllocate > 0)
     equalSpaceToAllocate =
@@ -716,7 +832,17 @@ const readjustSizes = (
   }
 };
 
-const emitEvent = (name, data = undefined, injectPrevAndNextPanes = false) => {
+/**
+ * Helper function to emit an event.
+ * @param name - The name of the event to emit.
+ * @param data - The data to unpack to the event.
+ * @param injectPrevAndNextPanes - If the event should include information about the adjacent panes.
+ */
+const emitEvent = (
+  name,
+  data = undefined,
+  injectPrevAndNextPanes = false,
+): void => {
   const index = data?.index ?? touch.value.activeSplitter ?? null;
   emit(name, {
     ...data,
@@ -734,8 +860,6 @@ const emitEvent = (name, data = undefined, injectPrevAndNextPanes = false) => {
   });
 };
 
-// Watchers.
-// --------------------------------------------------------
 watch(
   () => props.firstSplitter,
   () => redoSplitters(),
